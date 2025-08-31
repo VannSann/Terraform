@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION       = 'us-east-1'
+        ECR_REPO         = '474668404570.dkr.ecr.us-east-1.amazonaws.com/springboot-ecr'  // from terraform output
+        CLUSTER_NAME     = 'springboot-cluster'      // from terraform output
+        SERVICE_NAME     = 'springboot-service'      // from terraform output
+        IMAGE_TAG        = "${BUILD_NUMBER}"
+        DOCKER_IMAGE     = "${ECR_REPO}:${IMAGE_TAG}"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git credentialsId: 'github-token-creds',
+                    url: 'https://github.com/VannSann/ECR-AWScodepipeline.git',
+                    branch: 'main'
+            }
+        }
+
+        stage('Build Maven Project') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${DOCKER_IMAGE} ."
+            }
+        }
+
+        stage('Push Docker Image to ECR') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds' // your Jenkins AWS credentials ID or provide required IAM role for the EC2/Jenkins deployment machine
+                ]]) {
+                    sh '''
+                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
+                        docker push $DOCKER_IMAGE
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to ECS') {
+            steps {
+                sh '''
+                    aws ecs update-service \
+                        --cluster $CLUSTER_NAME \
+                        --service $SERVICE_NAME \
+                        --force-new-deployment \
+                        --region $AWS_REGION
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Successfully deployed to ECS using image: ${DOCKER_IMAGE}"
+        }
+        failure {
+            echo "❌ Build or deployment failed."
+        }
+        always {
+            cleanWs()
+        }
+    }
+}
