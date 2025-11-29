@@ -13,7 +13,6 @@ pipeline {
                 checkout scm
             }
         }
-/*
         stage('Terraform Init') {
             steps {
                 sh """
@@ -31,7 +30,6 @@ pipeline {
                 """
             }
         }
-*/
         stage('Approval Required') {
             steps {
                 script {
