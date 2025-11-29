@@ -26,6 +26,7 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 sh """
+                    cd launchEC2
                     terraform plan -out=tfplan
                 """
             }
@@ -71,11 +72,11 @@ pipeline {
         stage('Terraform Apply') {
             steps {
                 sh """
+                    cd launchEC2
                     terraform apply -auto-approve tfplan
                 """
             }
         }
     }
-
 
 }
