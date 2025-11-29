@@ -13,6 +13,7 @@ pipeline {
                 checkout scm
             }
         }
+/*
         stage('Terraform Init') {
             steps {
                 sh """
@@ -22,7 +23,7 @@ pipeline {
                 """
             }
         }
-/*
+
         stage('Terraform Plan') {
             steps {
                 sh """
