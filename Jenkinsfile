@@ -13,14 +13,10 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Check-dir'){
-            steps{
-                sh "cd launchEC2/ "
-            }
-        }
         stage('Terraform Init') {
             steps {
                 sh """
+                    cd launchEC2
                     terraform init
                 """
             }
