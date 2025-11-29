@@ -18,10 +18,11 @@ pipeline {
                 sh """
                     cd launchEC2
                     terraform init
+                    terraform plan -out=tfplan
                 """
             }
         }
-
+/*
         stage('Terraform Plan') {
             steps {
                 sh """
@@ -29,7 +30,7 @@ pipeline {
                 """
             }
         }
-
+*/
         stage('Approval Required') {
             steps {
                 script {
